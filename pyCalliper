@@ -1,0 +1,19 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug 30 18:05:34 2012
+
+@author: chauvet
+
+wx interface for granulometrie
+"""
+
+import wx
+
+from LibPyCalliper.MainWindows import ProjectManager
+
+#Launch the wx application
+app = wx.App()
+a = ProjectManager(None)
+app.MainLoop()
+
