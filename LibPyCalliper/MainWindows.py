@@ -28,7 +28,7 @@ from PictureEditor import *
 from PlotGSWindows import *
 
 from Functions import *
-
+import cPickle as pickle
 
 CURPATH = determine_path()
 
@@ -212,7 +212,7 @@ class ProjectManager(wx.Frame):
         dlg = wx.FileDialog(
         self, message="Open a project file ...",
         defaultDir="~/",
-        defaultFile="", wildcard="Numpy saved structure (*.npy)|*.npy", style=wx.OPEN
+        defaultFile="", wildcard="Pickle data (*.pkl)|*.pkl", style=wx.OPEN
         )
 
         if dlg.ShowModal() == wx.ID_OK:
@@ -249,7 +249,7 @@ class ProjectManager(wx.Frame):
 
             #If this image not already exist in the list load them
             if image_name not in self.data.keys():
-                self.data[image_name] = {'Name':image_name,'path':image_path,'proceded':False,'scale':None,'scale_coord':None,'ROI':None,'exclusion_zones':None,'ReadyToProced':False,'data':None}
+                self.data[image_name] = {'Name':image_name,'path':image_path,'proceded':False,'scale':None,'scale_img_and_true':None,'scale_coord':None,'ROI':None,'exclusion_zones':None,'ReadyToProced':False,'data':None}
                 # 0 will insert at the start of the list
                 pos = self.list.InsertStringItem(0,image_name)
                 # add values in the other columns on the same row
@@ -269,7 +269,7 @@ class ProjectManager(wx.Frame):
             dlg = wx.FileDialog(
             self, message="Save file as ...",
             defaultDir="~/",
-            defaultFile="", wildcard="Numpy saved structure (*.npy)|*.npy", style=wx.SAVE
+            defaultFile="pycal.pkl", wildcard="Pickle data (*.pkl)|*.pkl", style=wx.SAVE
             )
 
             if dlg.ShowModal() == wx.ID_OK:
@@ -279,7 +279,9 @@ class ProjectManager(wx.Frame):
             dlg.Destroy()
 
         if 'project_save_file' in self.Config.keys():
-            np.save(self.Config['project_save_file'],[self.data,self.Config])
+            with open(self.Config['project_save_file'], 'wb') as f:
+                pickle.dump({'data':self.data,'config':self.Config}, f, protocol=2)
+
 
     def OpenImageFolder(self, event):
         """
@@ -328,7 +330,7 @@ class ProjectManager(wx.Frame):
         for image in self.image_names:
             image = os.path.basename(image)
             if image not in self.data.keys():
-                self.data[image] = {'Name':image,'path':self.img_path,'proceded':False,'scale':None,'scale_coord':None,'ROI':None,'exclusion_zones':None,'ReadyToProced':False,'data':None}
+                self.data[image] = {'Name':image,'path':self.img_path,'proceded':False,'scale':None,'scale_img_and_true':None,'scale_coord':None,'ROI':None,'exclusion_zones':None,'ReadyToProced':False,'data':None}
                 # 0 will insert at the start of the list
                 pos = self.list.InsertStringItem(0,image)
                 # add values in the other columns on the same row
@@ -455,12 +457,13 @@ class ProjectManager(wx.Frame):
         #Get all grain size
         #Concatenate the grain size data
         total_gs = array([])
-        for name in self.data.keys():
-            if self.data[name]['data'] != None:
-                total_gs = hstack([total_gs,GetGrainSize(self.data[name])])
+        total_gs_pix = array([])
+        photo_name = array([])
+        photo_scale = array([])
+
 
         #If len > 0 save this to file. First ask for a file name and place
-        if len(total_gs) > 0:
+        if len(self.data.keys()) > 0:
 
             dlg = wx.FileDialog(
             self, message="Save file as ...",
@@ -471,11 +474,24 @@ class ProjectManager(wx.Frame):
             if dlg.ShowModal() == wx.ID_OK:
                 path = dlg.GetPath()
 
+                f = open(path,'w')
+                f.write("#pyCalliper granulo file. Grain_size is the small axis length (from center to border)\n#Image_name\tGrain_size (mm)\tGrain_size (pixel)\tScale_length (pixel)\tScale_value (cm)\n")
                 #Save the granulo to this file
-                np.savetxt(path,total_gs)
+                for name in self.data.keys():
+                    if self.data[name]['data'] != None:
+                        total_gs = GetGrainSize(self.data[name])
+                        total_gs_pix = GetGrainSize(self.data[name],pixel=True)
+                        photo_scale = self.data[name]['scale_img_and_true']
+
+                        for i in xrange(len(total_gs)):
+                            f.write("%s\t%0.3f\t%0.3f\t%0.3f\t%0.3f\n"%( name, total_gs[i], total_gs_pix[i], photo_scale[0], photo_scale[1] ) )
+
+                f.close()
+
+
+                #OLD STUFF np.savetxt(path,hstack( [photo_name, total_gs, total_gs_pix] ).T)
 
             dlg.Destroy()
 
 
 #-------------------------------------------------------------------
-

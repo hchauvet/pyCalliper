@@ -50,6 +50,7 @@ class EditPictureWindows(wx.Frame):
 
         #Some constants
         self.flipud_needed = True
+        self.photo_data['flipud'] = self.flipud_needed
 
         self.InitMenu()
         self.InitUI()
@@ -220,11 +221,13 @@ class EditPictureWindows(wx.Frame):
             pour mettre a jour l'affichage de l'echelle
         """
 
-        saved_scale = self.photo_data['scale']
+        saved_scale = self.photo_data['scale_img_and_true']
         if saved_scale == None:
             self.imgscale_textbox.ChangeValue("None")
         else:
-            self.imgscale_textbox.ChangeValue(str(saved_scale.round(2)))
+            self.imgscale_textbox.ChangeValue(str(saved_scale[0].round(2)))
+            self.true_s = saved_scale[1]
+            self.img_s = saved_scale[0]
 
         self.truescale_textbox.ChangeValue(str(self.true_s))
 
@@ -249,6 +252,8 @@ class EditPictureWindows(wx.Frame):
             self.flipud_needed = False
         else:
             self.flipud_needed = True
+
+        self.photo_data['flipud'] = self.flipud_needed
 
         #clear
         self.axes.clear()
@@ -294,6 +299,7 @@ class EditPictureWindows(wx.Frame):
                 self.add_scale = False
                 #Save to image dict
                 self.SaveModification('scale',self.img_s/self.true_s)
+                self.SaveModification('scale_img_and_true',[self.img_s, self.true_s])
                 #Save scale position
                 self.SaveModification('scale_coord',self.scale_pts)
 
@@ -430,6 +436,7 @@ class EditPictureWindows(wx.Frame):
             #if img scale != none save in image dict file
             if self.img_s != None:
                 self.SaveModification('scale',self.img_s/self.true_s)
+                self.SaveModification('scale_img_and_true',[self.img_s,self.true_s])
 
 
     # Toolbar Actions
@@ -447,7 +454,7 @@ class EditPictureWindows(wx.Frame):
         #If false
         if not self.add_roi and self.roi_pts[1] == None:
             #Init a rectangle (xy),width,height
-            self.roi_rect = Rectangle((None,None),None,None,facecolor='none')
+            self.roi_rect = Rectangle((0,0), 0, 0, facecolor='none')
             #add the rect to the plot
             self.added_roi_rect = self.axes.add_patch(self.roi_rect)
             self.add_roi = True
@@ -458,7 +465,7 @@ class EditPictureWindows(wx.Frame):
     def AddZone(self, e):
 
         if not self.add_zone:
-            self.new_zone_rect.append(Rectangle((None,None),None,None,facecolor='none',edgecolor='y'))
+            self.new_zone_rect.append(Rectangle((0,0), 0, 0,facecolor='none',edgecolor='y'))
 
             self.added_zone_rect.append(self.axes.add_patch(self.new_zone_rect[-1]))
             self.add_zone = True
@@ -530,7 +537,7 @@ class EditPictureWindows(wx.Frame):
 
                 #Add a picker radius to each lines
                 for line in cl.collections:
-                    line.set_picker(10)
+                    line.set_picker(20)
 
                 #Calcul des axes pour les afficher sur les cailloux
                 self.PlotItemAxis()
@@ -540,7 +547,7 @@ class EditPictureWindows(wx.Frame):
         if self.photo_data['ROI'] != None and 'ROI' not in no_redraw:
             self.roi_pts = self.photo_data['ROI']
             if self.added_roi_rect == None:
-                self.roi_rect = Rectangle((None,None),None,None,fc='none')
+                self.roi_rect = Rectangle((0,0), 0, 0,fc='none')
 
             self.roi_rect.set_xy((self.photo_data['ROI'][0],self.photo_data['ROI'][1]))
             self.roi_rect.set_width(self.photo_data['ROI'][2] - self.photo_data['ROI'][0])
@@ -594,14 +601,14 @@ class EditPictureWindows(wx.Frame):
 
     def PlotItemAxis(self):
         for measure in self.photo_data['data']['measurements']:
-            measure['Orientation2'] = GetOrientation(measure['CentralMoments']) #compute ellipse orientation
+            Orientation= GetOrientation(measure['CentralMoments']) #compute ellipse orientation
 
             x0 = measure['Centroid'][1]
             y0 = measure['Centroid'][0]
-            x1 = x0 + cos(measure['Orientation2']) * 0.5 * measure['MajorAxisLength']
-            y1 = y0 - sin(measure['Orientation2']) * 0.5 * measure['MajorAxisLength']
-            x2 = x0 - sin(measure['Orientation2']) * 0.5 * measure['MinorAxisLength']
-            y2 = y0 - cos(measure['Orientation2']) * 0.5 * measure['MinorAxisLength']
+            x1 = x0 + cos(Orientation) * 0.5 * measure['MajorAxisLength']
+            y1 = y0 - sin(Orientation) * 0.5 * measure['MajorAxisLength']
+            x2 = x0 - sin(Orientation) * 0.5 * measure['MinorAxisLength']
+            y2 = y0 - cos(Orientation) * 0.5 * measure['MinorAxisLength']
 
             #Ajout de la ROI
             if self.photo_data['data']['ROI'] != None:
@@ -652,4 +659,3 @@ class EditPictureWindows(wx.Frame):
         #update parent
         self.UpdateDataOnGraph()
         self.UpdateParentList()
-

@@ -1,0 +1,5 @@
+#pyCalliper granulo file. Grain_size is the small axis length (from center to border)
+#Image_name	Grain_size (mm)	Grain_size (pixel)	Scale_length (pixel)	Scale_value (cm)
+IMG_7212.JPG	0.653	92.952	1423.708	1.000
+IMG_7212.JPG	0.810	115.298	1423.708	1.000
+IMG_7212.JPG	0.914	130.080	1423.708	1.000

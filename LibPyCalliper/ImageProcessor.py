@@ -56,7 +56,10 @@ class WorkerThread(Thread):
         # need to structure your processing so that you periodically
         # peek at the abort variable
         photo = self.photo
-        gs, objects_found, measurements = GetGS(photo['path']+os.path.sep+photo['Name'],photo['scale'],roi=photo['ROI'],exclude_zones=photo['exclusion_zones'],show=False)
+        gs, objects_found, measurements = GetGS(photo['path']+os.path.sep+photo['Name'],photo['scale'],
+                        roi=photo['ROI'],exclude_zones=photo['exclusion_zones'],show=False,
+                        flipudflag=photo['flipud'])
+
         if self._want_abort:
             # Use a result of None to acknowledge the abort (of
             # course you can use whatever you'd like or even
@@ -79,4 +82,3 @@ class WorkerThread(Thread):
         self._want_abort = 1
 
 #-----------------------------------------------------------------------
-

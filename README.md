@@ -17,3 +17,7 @@ Install from git
 then run 
 
 `./pyCalliper`
+
+Create an package
+-----------------
+sudo python setup.py sdist

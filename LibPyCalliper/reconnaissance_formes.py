@@ -9,16 +9,31 @@ besoin de scikits image 0.6
 """
 
 import pylab as m
-from skimage import filter, color, morphology, measure, exposure
-from scipy import ndimage
+from skimage import filters, color, morphology, measure, exposure
+from skimage.feature import peak_local_max
+from scipy import ndimage, flipud
+
+try:
+    import cv2
+    opencv = True
+except:
+    opencv = False
+    print('For best performance install opencv (sudo apt-get install python-opencv)')
 
 #TODO: CLASS AVEC comme option nom image, ROI region of interest et scale
 #doit sortir vecteur avec les tailles de grain
 
-def GetGS(image_name,scale,roi=None,show=True,min_size=1500,exclude_zones=None,measurement_types=['Centroid','MajorAxisLength','MinorAxisLength','CentralMoments','BoundingBox']):
+def GetGS(image_name, scale, roi=None, show=True,
+          min_size=500, exclude_zones=None, flipudflag=False):
 
     #Load image (Rappel pour convertir couleur to rgb color.rgb2gray)
-    original = m.imread(image_name)
+    if opencv:
+        original = cv2.imread(image_name)
+    else:
+        original = m.imread(image_name)
+
+    if flipudflag:
+        original = flipud(original)
 
 
     #manage exclusion zone put them to 1 i.e. bottom
@@ -46,7 +61,11 @@ def GetGS(image_name,scale,roi=None,show=True,min_size=1500,exclude_zones=None,m
             markers_zones = markers_zones[ya:yb,xa:xb]
 
     #transform to hsv
-    img = color.rgb2hsv(original)
+    if opencv:
+        img = cv2.cvtColor(original, cv2.COLOR_BGR2HSV)
+    else:
+        img = color.rgb2hsv(original)
+
     #use s chanel
     img = img[:,:,1]
 
@@ -58,11 +77,14 @@ def GetGS(image_name,scale,roi=None,show=True,min_size=1500,exclude_zones=None,m
         m.imshow(original)
 
     #test filtre sobel (avoir les pentes)
-    elev = filter.sobel(thre)
+    if opencv:
+        elev = cv2.Laplacian(thre, cv2.CV_64F)
+    else:
+        elev = filters.sobel(thre)
 
 
     #compute an auto threshold
-    thresh = filter.threshold_otsu(thre)
+    thresh = filters.threshold_otsu(thre)
 
     #create markers of background and gravel
     markers = m.zeros_like(thre)
@@ -77,11 +99,19 @@ def GetGS(image_name,scale,roi=None,show=True,min_size=1500,exclude_zones=None,m
 
 
     #use watershade transform (use markes as starting point)
-    segmentation = morphology.watershed(elev,markers)
+    segmentation = morphology.watershed(elev, markers)
 
 
     #Clean small object
-    label_objects, nb_labels = ndimage.label(ndimage.binary_fill_holes(ndimage.binary_closing(segmentation-1)))
+    if opencv:
+        kernel = m.ones((2,2), m.uint8)
+        closing = cv2.morphologyEx(segmentation-1, cv2.MORPH_CLOSE, kernel)
+    else:
+        closing = ndimage.binary_closing(segmentation-1)
+
+    tmp = ndimage.binary_fill_holes(closing)
+    label_objects, nb_labels = ndimage.label(tmp)
+
     sizes = m.bincount(label_objects.ravel())
     mask_sizes = sizes > min_size
     mask_sizes[0] = 0
@@ -95,7 +125,8 @@ def GetGS(image_name,scale,roi=None,show=True,min_size=1500,exclude_zones=None,m
         m.contour(ndimage.binary_fill_holes(label_objects_clean), linewidths=1.2, colors='y')
 
     #trouve les informations des objets
-    mes = measure.regionprops(label_objects_clean,properties=measurement_types)
+    #old version of scikit properties=measurement_types
+    mes = measure.regionprops(label_objects_clean)
 
 
 
@@ -103,14 +134,14 @@ def GetGS(image_name,scale,roi=None,show=True,min_size=1500,exclude_zones=None,m
     for prop in mes:
         #Correct orientation ! car orientation prend pas en compte le cadrant !!!
         #: elements of the inertia tensor [a b; b c]
-        prop['Orientation2'] = GetOrientation(prop['CentralMoments'])
+        Orientation = GetOrientation(prop['CentralMoments'])
 
         x0 = prop['Centroid'][1]
         y0 = prop['Centroid'][0]
-        x1 = x0 + m.cos(prop['Orientation2']) * 0.5 * prop['MajorAxisLength']
-        y1 = y0 - m.sin(prop['Orientation2']) * 0.5 * prop['MajorAxisLength']
-        x2 = x0 - m.sin(prop['Orientation2']) * 0.5 * prop['MinorAxisLength']
-        y2 = y0 - m.cos(prop['Orientation2']) * 0.5 * prop['MinorAxisLength']
+        x1 = x0 + m.cos(Orientation) * 0.5 * prop['MajorAxisLength']
+        y1 = y0 - m.sin(Orientation) * 0.5 * prop['MajorAxisLength']
+        x2 = x0 - m.sin(Orientation) * 0.5 * prop['MinorAxisLength']
+        y2 = y0 - m.cos(Orientation) * 0.5 * prop['MinorAxisLength']
 
         if show:
             m.plot((x0, x1), (y0, y1), '-r', linewidth=2.5)
@@ -155,4 +186,3 @@ if __name__ == "__main__":
 
 
     m.show()
-

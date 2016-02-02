@@ -12,6 +12,7 @@ Part of pyCalliper project
 """
 import os
 from numpy import load as numpy_load
+import cPickle as pickle
 
 # Function to update statu from the image data dictionary
 def Create_statu_txt(one_image_dict):
@@ -74,23 +75,29 @@ def LoadProject(project_file):
 
             config, data = LoadProject('my_project.npy')
     """
-    alldata = numpy_load(project_file)
+    with open(project_file, 'rb') as f:
+        alldata = pickle.load(f)
 
-    return alldata[1], alldata[0]
+    return alldata['config'], alldata['data']
 
 #Function to get the grain size from a photo_data dictionary
-def GetGrainSize(photo_data):
+def GetGrainSize(photo_data,pixel=False):
     """
         Extract grain size from a photo_data dict. photo_data need the key 'measurements' in photo_data['data']
         return the grain size
+
+        pixel allow to export the grain size in millimeter (pixel=False) or in pixel (pixel = True)
+
     """
 
     gs = []
     #test on photo_data
     if 'measurements' in photo_data['data'].keys():
         for mesure in photo_data['data']['measurements']:
-            gs.append((mesure['MinorAxisLength']/photo_data['scale'])*10**1)
+            if pixel:
+                gs.append(mesure['MinorAxisLength'])
+            else:
+                gs.append((mesure['MinorAxisLength']/photo_data['scale'])*10**1)
 
 
     return gs
-
