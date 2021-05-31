@@ -14,12 +14,13 @@ from skimage.segmentation import watershed
 
 from scipy import ndimage, flipud
 
+# TODO: OPENCV need to be tested !!!!
 try:
     import cv2
-    opencv = True
+    opencv = False
 except:
     opencv = False
-    print('For best performance install opencv (sudo apt-get install python-opencv)')
+    # print('For best performance install opencv (sudo apt-get install python-opencv)')
 
 #TODO: CLASS AVEC comme option nom image, ROI region of interest et scale
 #doit sortir vecteur avec les tailles de grain
@@ -38,7 +39,7 @@ def GetGS(image_name, scale, roi=None, show=True,
 
 
     #manage exclusion zone put them to 1 i.e. bottom
-    if exclude_zones != None:
+    if exclude_zones is not None:
          #create markers of background and gravel
         markers_zones = m.zeros_like(original[:,:,0])
 
@@ -104,11 +105,11 @@ def GetGS(image_name, scale, roi=None, show=True,
 
 
     #Clean small object
-    if opencv:
-        kernel = m.ones((2,2), m.uint8)
-        closing = cv2.morphologyEx(segmentation-1, cv2.MORPH_CLOSE, kernel)
-    else:
-        closing = ndimage.binary_closing(segmentation-1)
+    #if opencv:
+    #    kernel = m.ones((2, 2), m.uint8)
+    #    closing = cv2.morphologyEx((segmentation-1).astype('uint8'), cv2.MORPH_CLOSE, kernel)
+    #else:
+    closing = ndimage.binary_closing(segmentation-1)
 
     tmp = ndimage.binary_fill_holes(closing)
     label_objects, nb_labels = ndimage.label(tmp)
