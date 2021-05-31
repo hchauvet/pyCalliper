@@ -12,7 +12,7 @@ Part of pyCalliper project
 """
 
 import wx
-from reconnaissance_formes import GetGS, GetOrientation
+from LibPyCalliper.reconnaissance_formes import GetGS
 from threading import *
 
 import os #to get the separator

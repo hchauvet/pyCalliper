@@ -45,7 +45,7 @@ def separate_sizes( the_data, categories ):
                     break
 
             if toggle_error:
-                print '"' + element + '"' + ' is not a proper entry'
+                print('"' + element + '"' + ' is not a proper entry')
 
     return ( size_array, categories )
 

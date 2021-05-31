@@ -12,7 +12,7 @@ Part of pyCalliper project
 """
 import os
 from numpy import load as numpy_load
-import cPickle as pickle
+import pickle
 
 # Function to update statu from the image data dictionary
 def Create_statu_txt(one_image_dict):
@@ -57,16 +57,16 @@ def find_in_list(listctrl,searchValue,col=0):
 
 
 #Function to get the path of the current file
-def determine_path ():
+def determine_path():
     try:
         root = __file__
-        if os.path.islink (root):
-            root = os.path.realpath (root)
-        return os.path.dirname (os.path.abspath (root))
+        if os.path.islink(root):
+            root = os.path.realpath(root)
+        return os.path.dirname(os.path.abspath(root))
     except:
-        print "I'm sorry, but something is wrong."
-        print "There is no __file__ variable. Please contact the author."
-        sys.exit ()
+        print("I'm sorry, but something is wrong.")
+        print("There is no __file__ variable. Please contact the author.")
+        sys.exit()
 
 #Function To load the data and the Configuration
 def LoadProject(project_file):

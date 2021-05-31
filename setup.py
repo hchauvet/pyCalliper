@@ -7,11 +7,11 @@ from distutils.core import setup
 files = ["icons/*"]
 
 setup(name = "pyCalliper",
-    version = "0.1.1",
+    version = "0.3",
     description = "Image processing for grain size image",
     author = "CHAUVET Hugo",
-    author_email = "chauvet@ipgp.fr",
-    url = "https://morpho.ipgp.fr/OSS",
+    author_email = "hugo.chauvet@gmail.com",
+    url = "https://github.com/hchauvet/pyCalliper",
     #Name the folder where your packages live:
     #(If you have other packages (dirs) or modules (py files) then
     #put them into the package directory - they will be found

@@ -22,17 +22,14 @@ from matplotlib.patches import Patch, Rectangle
 
 from scipy import flipud, asarray, sqrt, shape, arange, cos, sin, array, hstack
 from scipy import ndimage
-from scipy.misc import imread
+from imageio import imread
 
-from reconnaissance_formes import GetGS, GetOrientation
-
-from Functions import *
+from LibPyCalliper.reconnaissance_formes import GetGS, GetOrientation
+from LibPyCalliper.Functions import *
 import os
 
 CURPATH = determine_path()
 
-#We need some function contained in Functions.py
-from Functions import *
 class EditPictureWindows(wx.Frame):
     """
         Class avec l'editeur pour gerer la photo
@@ -98,11 +95,11 @@ class EditPictureWindows(wx.Frame):
         # Create the toolbar
         #
         self.toolbar = self.CreateToolBar()
-        ascale = self.toolbar.AddLabelTool(0, 'Add scale', wx.Bitmap(CURPATH+'/icons/scale_edit.png'),shortHelp='Draw scale on picture')
-        aroi = self.toolbar.AddLabelTool(1, 'Add ROI', wx.Bitmap(CURPATH+'/icons/roi_add.png'),shortHelp='Add a region of interest')
-        azone = self.toolbar.AddLabelTool(2, 'Add ROI', wx.Bitmap(CURPATH+'/icons/zone_add.png'),shortHelp='Add an exclusion zone')
-        reprocess =self.toolbar.AddLabelTool(3, 'Process on close', wx.Bitmap(CURPATH+'/icons/flag_green.png'),shortHelp='Reprocess this picture')
-        flipud_tb =self.toolbar.AddLabelTool(4, 'flipud', wx.Bitmap(CURPATH+'/icons/flipud.png'),shortHelp='Flip up-down this picture')
+        ascale = self.toolbar.AddTool(0, 'Add scale', wx.Bitmap(CURPATH+'/icons/scale_edit.png'),shortHelp='Draw scale on picture')
+        aroi = self.toolbar.AddTool(1, 'Add ROI', wx.Bitmap(CURPATH+'/icons/roi_add.png'),shortHelp='Add a region of interest')
+        azone = self.toolbar.AddTool(2, 'Add ROI', wx.Bitmap(CURPATH+'/icons/zone_add.png'),shortHelp='Add an exclusion zone')
+        reprocess =self.toolbar.AddTool(3, 'Process on close', wx.Bitmap(CURPATH+'/icons/flag_green.png'),shortHelp='Reprocess this picture')
+        flipud_tb =self.toolbar.AddTool(4, 'flipud', wx.Bitmap(CURPATH+'/icons/flipud.png'),shortHelp='Flip up-down this picture')
 
         if not self.photo_data['proceded']:
             self.toolbar.EnableTool(3,False)
@@ -320,19 +317,20 @@ class EditPictureWindows(wx.Frame):
 
     def CompleteRectangleOnClick(self,event,pts_var,rectangle_var,name):
         e = event
-        if e.xdata != None and e.ydata != None:
+        # print(e)
+
+        if e.xdata is not None and e.ydata is not None:
             #test sur les points
-            if pts_var[0] == None and pts_var[1] == None:
+            if pts_var[0] is None and pts_var[1] is None:
                 pts_var[0] = (e.xdata,e.ydata)
                 #update the rectangle
                 rectangle_var.set_xy(pts_var[0])
 
-            elif pts_var[1] == None:
-                pts_var[1] = (e.xdata,e.ydata)
+            elif pts_var[1] is None:
+                pts_var[1] = (e.xdata, e.ydata)
                 #add with and length to the rectange
                 rectangle_var.set_width(e.xdata-pts_var[0][0])
                 rectangle_var.set_height(e.ydata-pts_var[0][1])
-
 
                 #Save the data
                 self.SaveModification(name,[int(pts_var[0][0]),int(pts_var[0][1]),int(pts_var[1][0]),int(pts_var[1][1])])
@@ -344,11 +342,11 @@ class EditPictureWindows(wx.Frame):
 
     def OnGraphMove(self,event):
 
-        if event.xdata != None and event.ydata != None:
+        if event.xdata is not None and event.ydata is not None:
             if self.add_roi:
-
+                # print('add roi', event, self.roi_pts)
                 #test sur les points
-                if self.roi_pts[0] != None and self.roi_pts[1] == None:
+                if self.roi_pts[0] is not None and self.roi_pts[1] is None:
 
                     #update rectangle with coordinate
                     self.roi_rect.set_width(event.xdata-self.roi_pts[0][0])
@@ -359,7 +357,7 @@ class EditPictureWindows(wx.Frame):
             #pour les zones
             if self.add_zone:
                 #test sur les points
-                if self.new_zone_pts[0] != None and self.new_zone_pts[1] == None:
+                if self.new_zone_pts[0] is not None and self.new_zone_pts[1] is None:
 
                     #update rectangle with coordinate
                     self.new_zone_rect[-1].set_width(event.xdata-self.new_zone_pts[0][0])
@@ -372,8 +370,8 @@ class EditPictureWindows(wx.Frame):
             Function to manage when an element is picked on the plot
         """
 
-        #print "a cl has been picked"
-        #print event.ind
+        # print("a cl has been picked")
+        # print(event.ind)
 
         #Test right click: Remove this item
         if event.mouseevent.button == 3:
@@ -442,7 +440,7 @@ class EditPictureWindows(wx.Frame):
     # Toolbar Actions
     def AddScale(self, e):
             #reset to false if is clicked again
-            if self.add_scale or (self.scale_pts[0] != None and self.scale_pts[1] != None):
+            if self.add_scale or (self.scale_pts[0] is not None and self.scale_pts[1] is not None):
                 self.add_scale = False
             else:
                 self.add_scale = True
@@ -452,9 +450,10 @@ class EditPictureWindows(wx.Frame):
 
     def AddRoi(self,e):
         #If false
-        if not self.add_roi and self.roi_pts[1] == None:
+        if not self.add_roi and self.roi_pts[1] is None:
+            #print('start roi')
             #Init a rectangle (xy),width,height
-            self.roi_rect = Rectangle((0,0), 0, 0, facecolor='none')
+            self.roi_rect = Rectangle((0,0), 0, 0, facecolor='none', edgecolor='r', lw=1.5)
             #add the rect to the plot
             self.added_roi_rect = self.axes.add_patch(self.roi_rect)
             self.add_roi = True
@@ -498,7 +497,7 @@ class EditPictureWindows(wx.Frame):
         """
 
         #on chop l'item de la colone statu (1) correspondant a la photo entrain d'etre travaillee
-        self.parent.list.SetStringItem(self.parent.selected_index, 1, Create_statu_txt(self.photo_data))
+        self.parent.list.SetItem(self.parent.selected_index, 1, Create_statu_txt(self.photo_data))
 
     def OnClose(self, e):
         """
@@ -520,7 +519,7 @@ class EditPictureWindows(wx.Frame):
 
         #TODO: un filtre pour afficher grain tourves oui/non
 
-        if self.photo_data['data'] != None and 'data' not in no_redraw:
+        if self.photo_data['data'] is not None and 'data' not in no_redraw:
 
             if 'labeled_objects_found' in self.photo_data['data']:
 
@@ -533,21 +532,23 @@ class EditPictureWindows(wx.Frame):
                     yi += min(self.photo_data['data']['ROI'][1],self.photo_data['data']['ROI'][3])
 
                 #Store the contour line
-                cl = self.axes.contour(xi,yi,ndimage.binary_fill_holes(self.photo_data['data']['labeled_objects_found']), 1, linewidths=1.5, colors='c')
+                cl = self.axes.contour(xi, yi, ndimage.binary_fill_holes(self.photo_data['data']['labeled_objects_found']),
+                                       1, linewidths=1.5, colors='c')
 
                 #Add a picker radius to each lines
                 for line in cl.collections:
-                    line.set_picker(20)
+                    line.set_pickradius(5)
+                    line.set_picker(True)
 
                 #Calcul des axes pour les afficher sur les cailloux
                 self.PlotItemAxis()
 
 
         #Plot the roi
-        if self.photo_data['ROI'] != None and 'ROI' not in no_redraw:
+        if self.photo_data['ROI'] is not None and 'ROI' not in no_redraw:
             self.roi_pts = self.photo_data['ROI']
-            if self.added_roi_rect == None:
-                self.roi_rect = Rectangle((0,0), 0, 0,fc='none')
+            if self.added_roi_rect is None:
+                self.roi_rect = Rectangle((0,0), 0, 0, fc='none', edgecolor='r', lw=1.5)
 
             self.roi_rect.set_xy((self.photo_data['ROI'][0],self.photo_data['ROI'][1]))
             self.roi_rect.set_width(self.photo_data['ROI'][2] - self.photo_data['ROI'][0])
@@ -558,7 +559,7 @@ class EditPictureWindows(wx.Frame):
 
 
 
-        if self.photo_data['exclusion_zones'] != None and 'exclusion_zones' not in no_redraw:
+        if self.photo_data['exclusion_zones'] is not None and 'exclusion_zones' not in no_redraw:
             for zone in self.photo_data['exclusion_zones'] :
                 self.new_zone_rect.append(Rectangle((zone[0],zone[1]),zone[2] - zone[0],zone[3] - zone[1],facecolor='none',edgecolor='y'))
                 #add patch to axes
@@ -566,9 +567,12 @@ class EditPictureWindows(wx.Frame):
 
 
 
-        if self.photo_data['scale'] != None and 'scale' not in no_redraw:
+        if self.photo_data['scale'] is not None and 'scale' not in no_redraw:
             self.scale_pts = self.photo_data['scale_coord']
-            self.scale_line = self.axes.plot((self.scale_pts[0][0],self.scale_pts[1][0]), (self.scale_pts[0][1],self.scale_pts[1][1]), 'bo-',mec='w',ms=8,mew=2,linewidth=2,picker=5,label='scale')
+            self.scale_line, = self.axes.plot((self.scale_pts[0][0],self.scale_pts[1][0]),
+                                             (self.scale_pts[0][1],self.scale_pts[1][1]),
+                                             'bo-',mec='w',ms=8,mew=2,linewidth=2,
+                                             pickradius=5, picker=True, label='scale')
 
 
         #plot the removed items
@@ -633,16 +637,18 @@ class EditPictureWindows(wx.Frame):
                 self.scale_pts = [None,None]
                 self.ShowScale()
                 #clean lines
-                if self.scale_line != None:
+                if self.scale_line is not None:
                     self.scale_line.remove()
                 #reset scale_line to None
                 self.scale_line = None
 
             if key == 'ROI':
-                self.roi_pts = [None,None]
-                if self.added_roi_rect != None:
+                if self.added_roi_rect is not None:
                     self.added_roi_rect.remove()
+
                 self.added_roi_rect = None
+                self.roi_pts = [None, None]
+                self.add_roi = False
 
             if key == 'exclusion_zones':
                 self.new_zone_pts = [None,None]

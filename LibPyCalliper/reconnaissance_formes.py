@@ -9,8 +9,9 @@ besoin de scikits image 0.6
 """
 
 import pylab as m
-from skimage import filters, color, morphology, measure, exposure
-from skimage.feature import peak_local_max
+from skimage import filters, color, measure
+from skimage.segmentation import watershed
+
 from scipy import ndimage, flipud
 
 try:
@@ -48,7 +49,7 @@ def GetGS(image_name, scale, roi=None, show=True,
             yb = max(zone[1],zone[3])
             markers_zones[ya:yb,xa:xb] = 1
 
-    if roi != None:
+    if roi is not None:
         #crop the image
         xa = min(roi[0],roi[2])
         xb = max(roi[0],roi[2])
@@ -57,7 +58,7 @@ def GetGS(image_name, scale, roi=None, show=True,
 
         original = original[ya:yb,xa:xb]
 
-        if exclude_zones != None:
+        if exclude_zones is not None:
             markers_zones = markers_zones[ya:yb,xa:xb]
 
     #transform to hsv
@@ -89,17 +90,17 @@ def GetGS(image_name, scale, roi=None, show=True,
     #create markers of background and gravel
     markers = m.zeros_like(thre)
     if show:
-        print thresh
+        print(thresh)
 
     markers[thre < thresh] = 2
     markers[thre > thresh] = 1
 
-    if exclude_zones != None:
+    if exclude_zones is not None:
         markers[markers_zones == 1] = 1
 
 
     #use watershade transform (use markes as starting point)
-    segmentation = morphology.watershed(elev, markers)
+    segmentation = watershed(elev, markers)
 
 
     #Clean small object

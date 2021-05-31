@@ -20,9 +20,9 @@ from matplotlib.backends.backend_wxagg import \
 from scipy import array, hstack
 
 #The granulo lib contain functions to compute granulo stuffs from grainsize lists
-import granulo as gr
+import LibPyCalliper.granulo as gr
+from LibPyCalliper.Functions import *
 
-from Functions import *
 CURPATH = determine_path()
 class ShowGranuloWindows(wx.Frame):
     """

@@ -23,12 +23,12 @@ import os
 import numpy as np
 from scipy import array, hstack
 
-from ImageProcessor import *
-from PictureEditor import *
-from PlotGSWindows import *
+from LibPyCalliper.ImageProcessor import *
+from LibPyCalliper.PictureEditor import *
+from LibPyCalliper.PlotGSWindows import *
 
-from Functions import *
-import cPickle as pickle
+from LibPyCalliper.Functions import *
+import pickle
 
 CURPATH = determine_path()
 
@@ -60,15 +60,15 @@ class ProjectManager(wx.Frame):
         # Create the toolbar
         #
         toolbar = self.CreateToolBar()
-        load_image = toolbar.AddLabelTool(0, 'Select a folder containing images', wx.Bitmap(CURPATH+'/icons/images.png'),shortHelp='Load pictures folder')
-        load_one_image = toolbar.AddLabelTool(6, 'Select an image', wx.Bitmap(CURPATH+'/icons/image.png'),shortHelp='Load a picture')
+        load_image = toolbar.AddTool(0, 'Select a folder containing images', wx.Bitmap(CURPATH+'/icons/images.png'),shortHelp='Load pictures folder')
+        load_one_image = toolbar.AddTool(6, 'Select an image', wx.Bitmap(CURPATH+'/icons/image.png'),shortHelp='Load a picture')
         toolbar.AddSeparator()
-        load_project = toolbar.AddLabelTool(4, 'Load a project', wx.Bitmap(CURPATH+'/icons/load.png'),shortHelp='Load a pyCalliper project')
-        save_project = toolbar.AddLabelTool(3, 'Save the project', wx.Bitmap(CURPATH+'/icons/save.png'),shortHelp='Save project')
+        load_project = toolbar.AddTool(4, 'Load a project', wx.Bitmap(CURPATH+'/icons/load.png'),shortHelp='Load a pyCalliper project')
+        save_project = toolbar.AddTool(3, 'Save the project', wx.Bitmap(CURPATH+'/icons/save.png'),shortHelp='Save project')
         toolbar.AddSeparator()
-        run_detection = toolbar.AddLabelTool(1, 'Run grain detection', wx.Bitmap(CURPATH+'/icons/wand.png'),shortHelp='Launch grain detection')
-        plot_granulo = toolbar.AddLabelTool(2, 'Plot the grain size distribution', wx.Bitmap(CURPATH+'/icons/chart_bar.png'),shortHelp='Plot the grain size distribution')
-        export_granulo = toolbar.AddLabelTool(5, 'Export the grain size distribution', wx.Bitmap(CURPATH+'/icons/export.png'),shortHelp = 'Export the grain size distribution')
+        run_detection = toolbar.AddTool(1, 'Run grain detection', wx.Bitmap(CURPATH+'/icons/wand.png'),shortHelp='Launch grain detection')
+        plot_granulo = toolbar.AddTool(2, 'Plot the grain size distribution', wx.Bitmap(CURPATH+'/icons/chart_bar.png'),shortHelp='Plot the grain size distribution')
+        export_granulo = toolbar.AddTool(5, 'Export the grain size distribution', wx.Bitmap(CURPATH+'/icons/export.png'),shortHelp = 'Export the grain size distribution')
         toolbar.Realize()
 
         self.Bind(wx.EVT_TOOL, self.OnComputationStart, run_detection)
@@ -133,7 +133,7 @@ class ProjectManager(wx.Frame):
         vbox3.Add(self.sand_textbox, 0, border=1, flag=flags)
         hbox.Add(vbox3, 0)
 
-        self.vbox.Add(hbox, 0, flag = wx.ALIGN_CENTER | wx.TOP | wx.EXPAND )
+        self.vbox.Add(hbox, 0, flag = wx.ALIGN_CENTER | wx.TOP )
 
         self.SetSizer(self.vbox)
         self.vbox.SetMinSize((400, 350))
@@ -209,11 +209,9 @@ class ProjectManager(wx.Frame):
         """
 
         #Ouverture du gestionnaire de fichier
-        dlg = wx.FileDialog(
-        self, message="Open a project file ...",
-        defaultDir="~/",
-        defaultFile="", wildcard="Pickle data (*.pkl)|*.pkl", style=wx.OPEN
-        )
+        dlg = wx.FileDialog( self, message="Open a project file ...",
+                             defaultDir="~/", defaultFile="", wildcard="Pickle data (*.pkl)|*.pkl",
+                             style=wx.FD_OPEN)
 
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -235,11 +233,9 @@ class ProjectManager(wx.Frame):
         """
 
         #Ouverture du gestionnaire de fichier
-        dlg = wx.FileDialog(
-        self, message="Open a picture",
-        defaultDir="~/",
-        defaultFile="", wildcard="Image file |*.JPG;*.png;*.jpg", style=wx.OPEN
-        )
+        dlg = wx.FileDialog( self, message="Open a picture", defaultDir="~/",
+                             defaultFile="", wildcard="Image file |*.JPG;*.png;*.jpg",
+                             style=wx.FD_OPEN)
 
         if dlg.ShowModal() == wx.ID_OK:
             path = dlg.GetPath()
@@ -251,9 +247,10 @@ class ProjectManager(wx.Frame):
             if image_name not in self.data.keys():
                 self.data[image_name] = {'Name':image_name,'path':image_path,'proceded':False,'scale':None,'scale_img_and_true':None,'scale_coord':None,'ROI':None,'exclusion_zones':None,'ReadyToProced':False,'data':None}
                 # 0 will insert at the start of the list
-                pos = self.list.InsertStringItem(0,image_name)
+                # pos = self.list.InsertStringItem(0,image_name)
+                pos = self.list.InsertItem(0, image_name)
                 # add values in the other columns on the same row
-                self.list.SetStringItem(pos,1,Create_statu_txt(self.data[image_name]))
+                self.list.SetItem(pos,1,Create_statu_txt(self.data[image_name]))
             else:
                 print("Image %s already exist"%image)
         #close the windows
@@ -269,7 +266,7 @@ class ProjectManager(wx.Frame):
             dlg = wx.FileDialog(
             self, message="Save file as ...",
             defaultDir="~/",
-            defaultFile="pycal.pkl", wildcard="Pickle data (*.pkl)|*.pkl", style=wx.SAVE
+            defaultFile="pycal.pkl", wildcard="Pickle data (*.pkl)|*.pkl", style=wx.FD_SAVE
             )
 
             if dlg.ShowModal() == wx.ID_OK:
@@ -298,7 +295,7 @@ class ProjectManager(wx.Frame):
         if ret == wx.ID_OK:
             #save the image path
             self.img_path = dd.GetPath()
-            print self.img_path
+            print(self.img_path)
             #load the list
             self.Populate_Control_list()
 
@@ -332,9 +329,9 @@ class ProjectManager(wx.Frame):
             if image not in self.data.keys():
                 self.data[image] = {'Name':image,'path':self.img_path,'proceded':False,'scale':None,'scale_img_and_true':None,'scale_coord':None,'ROI':None,'exclusion_zones':None,'ReadyToProced':False,'data':None}
                 # 0 will insert at the start of the list
-                pos = self.list.InsertStringItem(0,image)
+                pos = self.list.InsertItem(0,image)
                 # add values in the other columns on the same row
-                self.list.SetStringItem(pos,1,Create_statu_txt(self.data[image]))
+                self.list.SetItem(pos,1,Create_statu_txt(self.data[image]))
             else:
                 print("Image %s already exist"%image)
 
@@ -348,13 +345,13 @@ class ProjectManager(wx.Frame):
         #boucle sur le repertoire image
         for i in self.data:
             name = self.data[i]['Name']
-            pos = self.list.InsertStringItem(0,name)
+            pos = self.list.InsertItem(0,name)
             # add values in the other columns on the same row
-            self.list.SetStringItem(pos,1,Create_statu_txt(self.data[name]))
+            self.list.SetItem(pos,1,Create_statu_txt(self.data[name]))
 
     def OnListSelected(self, e):
         #gestion lors de la selection
-        self.selected_index = e.m_itemIndex
+        self.selected_index = e.GetIndex()
         self.selected_photo_name = self.list.GetItemText(self.selected_index)
         self.selected_photo = self.data[self.selected_photo_name]
 
@@ -379,14 +376,13 @@ class ProjectManager(wx.Frame):
         else:
             msg = Create_statu_txt(self.data[self.list.GetItemText(idx)])
 
-        self.list.SetStringItem(idx, 1, msg)
+        self.list.SetItem(idx, 1, msg)
 
     #Gestion du woker pour creer des sousprocessus de traitement
     #
 
     def OnComputationStart(self ,event):
         """Start Computation."""
-
 
         #si si tout est ok avant de faire les calculs
         for photo_name in self.data:
@@ -410,7 +406,7 @@ class ProjectManager(wx.Frame):
         # Flag the worker thread to stop if running
         if self.worker:
             #self.status.SetLabel('Trying to abort computation')
-            print "trying to abort"
+            print("trying to abort")
             self.worker.abort()
 
     def OnComputationResult(self, event):
@@ -468,7 +464,7 @@ class ProjectManager(wx.Frame):
             dlg = wx.FileDialog(
             self, message="Save file as ...",
             defaultDir="~/",
-            defaultFile="", wildcard="Text file (*.txt)|*.txt|", style=wx.SAVE
+            defaultFile="", wildcard="Text file |(*.txt)|*.txt|", style=wx.FD_SAVE
             )
 
             if dlg.ShowModal() == wx.ID_OK:
@@ -483,7 +479,7 @@ class ProjectManager(wx.Frame):
                         total_gs_pix = GetGrainSize(self.data[name],pixel=True)
                         photo_scale = self.data[name]['scale_img_and_true']
 
-                        for i in xrange(len(total_gs)):
+                        for i in range(len(total_gs)):
                             f.write("%s\t%0.3f\t%0.3f\t%0.3f\t%0.3f\n"%( name, total_gs[i], total_gs_pix[i], photo_scale[0], photo_scale[1] ) )
 
                 f.close()
